@@ -1,0 +1,14 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP Arduino_Nano
+D Generic connector, single row, 01x15
+K connector
+F ~
+$ENDCMP
+#
+$CMP LED_C2RGB
+D LED RGB, Common Cathode
+K led rgb diode
+$ENDCMP
+#
+#End Doc Library
