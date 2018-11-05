@@ -10,7 +10,7 @@ const byte BOARD_LED = 13;
 const byte INTERRUPT_PIN = 2;
 
 //Interval required for debouncing the interrupt pin
-const int DEBOUNCE_INTERVAL_MS=100;
+const int DEBOUNCE_INTERVAL_MS=3000;
 
 //Interrupt signal pending code
 bool INTERRUPT_SIGNAL_PENDING=false;
@@ -26,9 +26,10 @@ void isr();
  */
 void setup() {
     pinMode(BOARD_LED, OUTPUT);
+    pinMode(INTERRUPT_PIN, INPUT_PULLUP);
     input.begin(9600);
     //output.begin(9600);
-    attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), isr, RISING); 
+    attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), isr, FALLING);
     //Wait for serial for non-leonardo boards
     delay(250);
 }
