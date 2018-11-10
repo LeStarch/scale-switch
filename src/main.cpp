@@ -14,6 +14,7 @@
 #include "runner.hpp"
 #include "indicator.hpp"
 #include "led13.hpp"
+#include "rgb.hpp"
 
 //Software serial is the serial device that the computer comes in on
 HardwareSerial& input = Serial;
@@ -29,14 +30,15 @@ bool INTERRUPT_SIGNAL_PENDING=false;
 Button b_podium(2, DEBOUNCE_INTERVAL_MS, BUTTON_PODIUM, true);
 Button b_display(7, 500, BUTTON_DISPLAY, false);
 
-//One Indicator, led13
+//Indicators: LED13, and RGB
 LED13 i_led(13);
+RGB i_rgb(9, 10, 11);
 
 //Setup the indicators
-Indicator* indicators[] = {&i_led};
+Indicator* indicators[] = {&i_led, &i_rgb};
 
 //Setup all runners
-Runner* runners[] = {&b_podium, &b_display, &i_led};
+Runner* runners[] = {&b_podium, &b_display, &i_led, &i_rgb};
 
 /**
  * What to do when the podium button is pressed.

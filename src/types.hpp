@@ -23,7 +23,7 @@
 //!< Maximum gpio pin count
 #define GPIO_PIN_COUNT 32
 //!< Get array elements
-#define NUM_ARRAY_ELEMENTS(array) sizeof(array)/sizeof(array[0])
+#define NUM_ARRAY_ELEMENTS(array) (sizeof(array)/sizeof(array[0]))
 
 //!< Sized 32bit floating point
 typedef float float32;
@@ -66,20 +66,19 @@ enum BootStatus {
     MAX_BOOT //!< Helper for bounds checking
 };
 /**
- * Handles assertions for the system by asserting, reporting an error and
- * explicitly returning from the "current" function to prevent downstream
- * problems.
- */
-#define ASSERT(cond,message) if(cond){error(__FILE__, __LINE__, message);return;}
-/**
- * Reports an error to the system. Will be handled by below error function.
- */
-#define REPORT_ERROR(message) error(__FILE__, __LINE__, message)
-
-/**
  * Function for handling errors. Will be called from the above error handling
  * function.
  */
 void error(const char* file, const int line, const char* message);
+/**
+ * Handles assertions for the system by asserting, reporting an error and
+ * explicitly returning from the "current" function to prevent downstream
+ * problems.
+ */
+#define ASSERT(cond,message) if(!cond){error(__FILE__, __LINE__, message);return;}
+/**
+ * Reports an error to the system. Will be handled by below error function.
+ */
+#define REPORT_ERROR(message) error(__FILE__, __LINE__, message)
 
 #endif /* SRC_TYPES_HPP_ */
