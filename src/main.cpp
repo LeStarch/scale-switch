@@ -1,13 +1,23 @@
+/*
+ * main.cpp:
+ *
+ * Main function that establishes both "loop" and "setup" functions.
+ *
+ *  Created on: Nov 9, 2018
+ *      Author: lestarch
+ */
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 #include <string.h>
+#include "types.hpp"
+#include "button.hpp"
+#include "runner.hpp"
+#include "indicator.hpp"
+#include "led13.hpp"
 
 //Software serial is the serial device that the computer comes in on
 HardwareSerial& input = Serial;
 SoftwareSerial output(3, 4);
-//Pins used for leds, status, and interrupts. Interrupts must be 2 or 3
-const byte BOARD_LED = 13;
-const byte INTERRUPT_PIN = 2;
 
 //Interval required for debouncing the interrupt pin
 const int DEBOUNCE_INTERVAL_MS=3000;
@@ -15,9 +25,42 @@ const int DEBOUNCE_INTERVAL_MS=3000;
 //Interrupt signal pending code
 bool INTERRUPT_SIGNAL_PENDING=false;
 
-//Function prototype for isr
-void isr();
+//Two buttons, one interrupt driven, the other not
+Button b_podium(2, DEBOUNCE_INTERVAL_MS, BUTTON_PODIUM, true);
+Button b_display(7, 500, BUTTON_DISPLAY, false);
 
+//One Indicator, led13
+LED13 i_led(13);
+
+//Setup the indicators
+Indicator* indicators[] = {&i_led};
+
+//Setup all runners
+Runner* runners[] = {&b_podium, &b_display, &i_led};
+
+/**
+ * What to do when the podium button is pressed.
+ */
+void podium_press(ButtonType button) {
+    REPORT_ERROR("Podium error detected");
+}
+
+/**
+ * What to do when the display button is pressed.
+ */
+void display_press(ButtonType button) {
+    REPORT_ERROR("Display error detected");
+}
+/**
+ * Define the error handling function, which passes the arguments
+ * to all the indicators.
+ */
+void error(const char* file, const int line, const char* message) {
+    //Error all the indicators
+    for (unsigned int i = 0; i < NUM_ARRAY_ELEMENTS(indicators); i++) {
+        indicators[i]->error(file, line, message);
+    }
+}
 /**
  * Setup:
  *
@@ -25,48 +68,25 @@ void isr();
  * interrupts based on the button push.
  */
 void setup() {
-    pinMode(BOARD_LED, OUTPUT);
-    pinMode(INTERRUPT_PIN, INPUT_PULLUP);
+    //Button press registers
+    b_podium.register_handler(&podium_press);
+    b_display.register_handler(&display_press);
+
     input.begin(9600);
-    //output.begin(9600);
-    attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), isr, FALLING);
     //Wait for serial for non-leonardo boards
     delay(250);
 }
-
-void loop() {
-	static unsigned int length = 0;
-    static int led_state = LOW;
-	static char message[1024];
-    //Check if the interrupt is pending
-    if (INTERRUPT_SIGNAL_PENDING && input.available() == 0) {
-        led_state = !led_state;
-        INTERRUPT_SIGNAL_PENDING = 0;
-        strncpy(message, "SOME", 5);
-        length = 4;
-    } else if (input.available() > 0) {
-    	message[0] = input.read();
-    	length = 1;
-    }
-    digitalWrite(BOARD_LED, led_state);
-    output.write(message, length);
-}
-
 /**
- * isr:
- *
- * Handles (and debounces) the incoming interrupt. 
+ * Loop calling runners once every N milliseconds
  */
-void isr() {
-    static unsigned int last = 0;
-    unsigned int current = millis();
-    //Brake out early when debouncing
-    //Note: will fail safely on overflow
-    if ((current > last) && (current < (last + DEBOUNCE_INTERVAL_MS))) {
-        return;
+void loop() {
+    int last = millis();
+    //For every runner, call it
+    for (unsigned int i = 0; i < NUM_ARRAY_ELEMENTS(runners); i++) {
+        runners[i]->run();
     }
-    last = current;
-    INTERRUPT_SIGNAL_PENDING = true;
+    //Wait for the next cycle
+    delay((last + RATE_GROUP_PERIOD) - millis());
 }
 
 /**
