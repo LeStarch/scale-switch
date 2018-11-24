@@ -14,16 +14,17 @@
 #include <stdint.h>
 
 //!< Maximum length of string
-#define MAX_STRING_LEN 80
-//!< Rate-group period. Run functions called every N-ms.
-//!< Currently set to one, as serial sends roughly 1char/ms
-#define RATE_GROUP_PERIOD 10
+#define MAX_STR_LEN 20
 //!< Seconds per millisecond
 #define MS_PER_SECOND 1000
 //!< Maximum gpio pin count
 #define GPIO_PIN_COUNT 32
+//!< IP Address Length (in bytes)
+#define IP_ADDRESS_LEN 4
 //!< Get array elements
 #define NUM_ARRAY_ELEMENTS(array) (sizeof(array)/sizeof(array[0]))
+//!< Runner count
+#define MAX_RUNNERS 10
 
 //!< Sized 32bit floating point
 typedef float float32;
@@ -75,10 +76,11 @@ void error(const char* file, const int line, const char* message);
  * explicitly returning from the "current" function to prevent downstream
  * problems.
  */
-#define ASSERT(cond,message) if(!cond){error(__FILE__, __LINE__, message);return;}
+#define ASSERT(cond,message) if(!(cond)){error(__FILE__, __LINE__, message);return;}
 /**
  * Reports an error to the system. Will be handled by below error function.
  */
-#define REPORT_ERROR(message) error(__FILE__, __LINE__, message)
+#define __FILENAME__ (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
+#define REPORT_ERROR(message) error(__FILENAME__, __LINE__, message)
 
 #endif /* SRC_TYPES_HPP_ */

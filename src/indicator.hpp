@@ -58,29 +58,31 @@ class Indicator : public Runner
          * and set the m_error boolean to indicate an error state. It is not
          * recommended to clear this error, as errors of this kind are
          * *usually* terminal.
+         * Note: static error context to "share" error state.
          * \param const char* file: file where error occured
          * \param const int line: line in file where error occured
          * \param const char* msg: user provided message
          */
-        virtual void error(const char* file, const int line, const char* msg);
+        static void error(const char* file, const int line, const char* msg);
         /**
          * Virtual destructor needed for a virtual class
          */
         virtual ~Indicator();
     protected:
-        //!< Current BootStatus
-        BootStatus m_boot;
-        //!< Line number of current error
-        int m_error_line;
-        //!< State indicating error condition encountered
-        bool m_error_state;
         //!< Contains the "pressed" state of buttons. Set to false to clear.
         bool m_pressed[MAX_BUTTON];
         //!< Contains the writing state of serial ports. Set to false to clear.
         bool m_writing[MAX_SERIAL];
-        //!< Holds current error file name
-        char m_error_file[MAX_STRING_LEN];
-        //!< Holds current error message
-        char m_error_message[MAX_STRING_LEN];
+        //Note: static strings for memory optimization
+        //!< Static, shared error state
+        static bool s_error_state;
+        //!< Static, shared current BootStatus
+        static BootStatus s_boot;
+        //!< Static, shared line number of current error
+        static int s_error_line;
+        //!< Static, shared current error file name
+        static char s_error_file[MAX_STR_LEN];
+        //!< Static, shared current error message
+        static char s_error_message[MAX_STR_LEN];
 };
 #endif /* SRC_INDICATOR_HPP_ */

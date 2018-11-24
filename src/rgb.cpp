@@ -16,23 +16,26 @@
 //!< Minimum macro
 #define MIN(a,b) ((a <= b)?a:b)
 
+//!< Note: store this memory in program (FLASH) not in stack. Save memory.
 //!< Array of arrays of color values. 0xFF is full-on, 0 is off.
-int POINTS[][COLOR_COUNT] = {
-        {0xFF, 0x00, 0x00}, //!< RED
-        {0xFF, 0xFF, 0x00}, //!< YELLOW
-        {0x00, 0xFF, 0x00}, //!< GREEN
-        {0x00, 0xFF, 0xFF}, //!< BLUE-GREEN
-        {0x00, 0x00, 0xFF}, //!< BLUE
-        {0xFF, 0x00, 0xFF}  //!< PURPLE
+const unsigned int RGB::POINTS[] PROGMEM = {
+        0xFF, 0x00, 0x00, //!< RED
+        0xFF, 0xFF, 0x00, //!< YELLOW
+        0x00, 0xFF, 0x00, //!< GREEN
+        0x00, 0xFF, 0xFF, //!< BLUE-GREEN
+        0x00, 0x00, 0xFF, //!< BLUE
+        0xFF, 0x00, 0xFF, //!< PURPLE
 };
 //!< Color to display on error
-int ERROR_COLOR[] = {0xFF, 0x54, 0x90};
+const unsigned int RGB::ERROR_POINTS[] PROGMEM = {
+        0xFF, 0x00, 0x00,
+        0x00, 0x00, 0x00
+};
 /**
  * Attach to given pins, and set their types.
  */
 RGB::RGB(int rpin, int gpin, int bpin) :
-    m_index(0),
-    m_count(0)
+    m_index(0)
 {
     m_pin[RED] = rpin;
     m_pin[GREEN] = gpin;
@@ -41,7 +44,10 @@ RGB::RGB(int rpin, int gpin, int bpin) :
     for (unsigned int i = 0; i < NUM_ARRAY_ELEMENTS(m_pin); i++) {
         pinMode(m_pin[i], OUTPUT);
     }
-    memcpy(m_color, POINTS[0], sizeof(m_color));
+    //Initialize color to be the first three words
+    m_color[0] = pgm_read_word_near(POINTS + 0);
+    m_color[1] = pgm_read_word_near(POINTS + 1);
+    m_color[2] = pgm_read_word_near(POINTS + 2);
 }
 
 /**
@@ -50,48 +56,53 @@ RGB::RGB(int rpin, int gpin, int bpin) :
  */
 void RGB::run() {
     //ASSERT(COLOR_COUNT == NUM_ARRAY_ELEMENTS(m_pin), "Color count failure");
-    m_count += RATE_GROUP_PERIOD;
-    //Find the next destination
-    int next = (m_index + 1) % NUM_ARRAY_ELEMENTS(POINTS);
-    //Handle errors, by copying in error color
-    if (m_error_state) {
-        memcpy(m_color, ERROR_COLOR, sizeof(m_color));
+	unsigned int next_index = 0;
+	unsigned int current[COLOR_COUNT]; //Current waypoint
+	unsigned int next[COLOR_COUNT]; //Next waypoint
+    const unsigned int* waypoints;
+	//Assign the waypoint pointer, and next index based on the error state
+	if (s_error_state) {
+        next_index = (m_index + COLOR_COUNT) % NUM_ARRAY_ELEMENTS(ERROR_POINTS);
+        waypoints = ERROR_POINTS;
+    } else {
+        next_index = (m_index + COLOR_COUNT) % NUM_ARRAY_ELEMENTS(POINTS);
+        waypoints = POINTS;
     }
-    //Handle waypoints when not erring
-    else {
-        //Update each color by doing the following:
-        // 1. Calculate the distance between this and next point as scalar
-        // 2. Multiply by current step size
-        // 3. Add value to color (at least +1 or -1)
-        for (int i = 0; i < COLOR_COUNT; i++) {
-            int new_color = 0;
-            int dist = POINTS[next][i] - POINTS[m_index][i];
-            float add = ((float)(dist))/255.0f * PWM_STEP;
-            //Less than distance bottom out at next waypoint
-            if (add < 0) {
-                add = MIN(add, -1.1f); //Step at least 1
-                new_color = MAX(m_color[i] + (int)add, POINTS[next][i]);
-            }
-            //Otherwise max out at next waypoint
-            else {
-                add = MAX(add, 1.1f); //Step at least 1
-                new_color = MIN(m_color[i] + (int)add, POINTS[next][i]);
-            }
-            //Assign the new color
-            m_color[i] = new_color;
+	//Assign current and next pointers
+	for (unsigned int i = 0; i < COLOR_COUNT; i++) {
+		current[i] = pgm_read_word_near(waypoints + m_index + i);
+		next[i] = pgm_read_word_near(waypoints + next_index + i);
+	}
+    //Update each color by doing the following:
+    // 1. Calculate the distance between this and next point as scalar
+    // 2. Multiply by current step size
+    // 3. Add value to color (at least +1 or -1)
+    for (unsigned int i = 0; i < COLOR_COUNT; i++) {
+        int dist = next[i] - current[i];
+        float add = ((float)(dist))/255.0f * PWM_STEP;
+        //Less than distance bottom out at next waypoint
+        if (add < -0.001) {
+            add = MIN(add, -1.1f); //Step at least 1
+            m_color[i] = MAX(m_color[i] + (int)add, next[i]);
+        }
+        //Otherwise max out at next waypoint
+        else if (add > 0.001) {
+            add = MAX(add, 1.1f); //Step at least 1
+            m_color[i] = MIN(m_color[i] + (int)add, next[i]);
         }
     }
     //Loop over colors and set their output
     //Also note: shift output to keep from overloading LEDs
     for (unsigned int i = 0; i < NUM_ARRAY_ELEMENTS(m_pin); i++) {
-        //ASSERT(m_color[i] >= 0 && m_color[i] <= 0xFF, "Bad color supplied");
+        //Cap color to prevent out-of-bounds color
+        m_color[i] = MIN(m_color[i], 0xFF);
+        m_color[i] = MAX(m_color[i], 0x00);
         analogWrite(m_pin[i], m_color[i] >> PWM_SHIFT);
     }
     //Now update the pointer
-    if (m_count >= 1000) {
+    if (Runner::interval_check(1000)) {
         //Jump to the next waypoint
-        memcpy(m_color, POINTS[next], sizeof(m_color));
-        m_index = next;
-        m_count = 0;
+        memcpy(m_color, next, sizeof(m_color));
+        m_index = next_index;
     }
 }

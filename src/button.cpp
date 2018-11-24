@@ -60,6 +60,7 @@ void Button::handle() {
     else if (m_handler != NULL) {
         m_handler(m_type);
     }
+    m_last = current;
 }
 /**
  * Run handler called every N milliseconds. Here the button state is polled

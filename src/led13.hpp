@@ -12,10 +12,9 @@
 #ifndef SRC_LED13_HPP_
 #define SRC_LED13_HPP_
 #include "indicator.hpp"
-
+#define SWITCH_PERIOD_MS 100
 class LED13 : public Indicator {
     public:
-        const int SWITCH_PERIOD_MS = 100;
         /**
          * Construct the LED13. Pass in the on-board pin. This is always
          * pin 13, but for transparency, this should be passed in.
@@ -29,14 +28,7 @@ class LED13 : public Indicator {
     protected:
         //!< Pin used for onboard LED, stored locally
         int m_pin;
-        //!< Counter of the number of calls (tracks time)
-        int m_counter;
         //!< State of the LED
         int m_state;
-
 };
-
-
-
-
 #endif /* SRC_LED13_HPP_ */

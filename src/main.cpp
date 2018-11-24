@@ -15,47 +15,69 @@
 #include "indicator.hpp"
 #include "led13.hpp"
 #include "rgb.hpp"
+#include "oled.hpp"
+#include "serial.hpp"
 
-//Software serial is the serial device that the computer comes in on
-HardwareSerial& input = Serial;
-SoftwareSerial output(3, 4);
+//!< Debounce Interval for HDMI
+#define HDMI_DEBOUNCE_INTERVAL_MS 3000
+//!< Debounce interval for screen button
+#define DISPLAY_DEBOUNCE_INTERVAL_MS 500
+//!< Recv pin for soft serial (2 or 3 have interrupts)
+#define SOFT_SERIAL_RECV_PIN 3
+//!< Send pin for soft serial
+#define SOFT_SERIAL_SEND_PIN 6
+//!< HDMI button number
+#define BUTTON_HDMI_PIN 2
+//!< OLED display button
+#define BUTTON_DISPLAY_PIN 7
+//!< Start-up time for the system
+#define STARUP_TIME_MS 5000
+//!< Serial baud rate for in and out
+#define SERIAL_BAUD_RATE 9600
 
-//Interval required for debouncing the interrupt pin
-const int DEBOUNCE_INTERVAL_MS=3000;
-
-//Interrupt signal pending code
-bool INTERRUPT_SIGNAL_PENDING=false;
+SoftwareSerial soft(SOFT_SERIAL_RECV_PIN, SOFT_SERIAL_SEND_PIN);
+SerialPass pass(Serial, soft);
 
 //Two buttons, one interrupt driven, the other not
-Button b_podium(2, DEBOUNCE_INTERVAL_MS, BUTTON_PODIUM, true);
-Button b_display(7, 500, BUTTON_DISPLAY, false);
+Button b_podium(BUTTON_HDMI_PIN, HDMI_DEBOUNCE_INTERVAL_MS,
+        BUTTON_PODIUM, true);
+Button b_display(BUTTON_DISPLAY_PIN, DISPLAY_DEBOUNCE_INTERVAL_MS,
+        BUTTON_DISPLAY, false);
 
-//Indicators: LED13, and RGB
+//Indicators: LED13, RGB, and OLED screen
 LED13 i_led(13);
+OLED i_oled;
 RGB i_rgb(9, 10, 11);
 
-//Setup the indicators
-Indicator* indicators[] = {&i_led, &i_rgb};
+//Setup the indicator array to run
+Indicator* indicators[] = {&i_oled, &i_rgb, &i_led};
 
-//Setup all runners
-Runner* runners[] = {&b_podium, &b_display, &i_led, &i_rgb};
-
+//Setup non-indicator runners
+Button* buttons[] = {&b_podium, &b_display};
 /**
  * What to do when the podium button is pressed.
  */
 void podium_press(ButtonType button) {
-    REPORT_ERROR("Podium error detected");
+    //Error all the indicators
+    for (unsigned int i = 0; i < NUM_ARRAY_ELEMENTS(indicators); i++) {
+        indicators[i]->button_pressed(button);
+    }
+    REPORT_ERROR("Podium error");
 }
-
 /**
  * What to do when the display button is pressed.
  */
 void display_press(ButtonType button) {
-    REPORT_ERROR("Display error detected");
+    //Error all the indicators
+    for (unsigned int i = 0; i < NUM_ARRAY_ELEMENTS(indicators); i++) {
+        indicators[i]->button_pressed(button);
+    }
+    REPORT_ERROR("ERROR");
 }
 /**
  * Define the error handling function, which passes the arguments
  * to all the indicators.
+ * Note: this is declared in "types.hpp" for use system wide
  */
 void error(const char* file, const int line, const char* message) {
     //Error all the indicators
@@ -70,25 +92,24 @@ void error(const char* file, const int line, const char* message) {
  * interrupts based on the button push.
  */
 void setup() {
-    //Button press registers
+    //Setup button handle registrars
     b_podium.register_handler(&podium_press);
     b_display.register_handler(&display_press);
-
-    input.begin(9600);
-    //Wait for serial for non-leonardo boards
-    delay(250);
+    //Launch the serial port code
+    pass.begin(SERIAL_BAUD_RATE);
+    //Register all runners
+    Runner::register_sleeper(&pass);
+    Runner::register_runners(reinterpret_cast<Runner**>(buttons), NUM_ARRAY_ELEMENTS(buttons));
+    Runner::register_runners(reinterpret_cast<Runner**>(indicators), NUM_ARRAY_ELEMENTS(indicators));
+    //Allow serial port to start-up, and system to become quiescent
+    //before starting up standard rate group drivers
+    delay(STARUP_TIME_MS);
 }
 /**
  * Loop calling runners once every N milliseconds
  */
 void loop() {
-    int last = millis();
-    //For every runner, call it
-    for (unsigned int i = 0; i < NUM_ARRAY_ELEMENTS(runners); i++) {
-        runners[i]->run();
-    }
-    //Wait for the next cycle
-    delay((last + RATE_GROUP_PERIOD) - millis());
+    Runner::cycle();
 }
 
 /**

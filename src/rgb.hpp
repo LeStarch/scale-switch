@@ -38,13 +38,15 @@ class RGB : public Indicator {
          */
         void run();
     private:
+        //!< Waypoints for normal mode, will be subdivided into sets of 3
+        static const unsigned int POINTS[];
+        //!< Waypoints for error mode, will be subdivided into sets of 3
+        static const unsigned int ERROR_POINTS[];
         //!< Pins to write to, in order to output color
         int m_pin[COLOR_COUNT];
         //!< Index of last waypoint reached
-        int m_index;
+        unsigned int m_index;
         //!< Current R,G,B colors of the LED
-        int m_color[COLOR_COUNT];
-        //!< Switch waypoints at second interval
-        int m_count;
+        unsigned int m_color[COLOR_COUNT];
 };
 #endif /* SRC_RGB_HPP_ */

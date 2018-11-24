@@ -13,7 +13,6 @@
  */
 LED13::LED13(int pin) : Indicator(),
     m_pin(pin),
-    m_counter(-1),
     m_state(HIGH)
 {
     pinMode(m_pin, OUTPUT);
@@ -25,15 +24,13 @@ LED13::LED13(int pin) : Indicator(),
  * per second. If the system enters error state, then the LED is held on.
  */
 void LED13::run() {
-    m_counter++;
     //Handle error case
-    if (!m_error_state) {
+    if (!s_error_state) {
         m_state = LOW;
     }
     //Handle normal operation
-    else if ((m_counter * RATE_GROUP_PERIOD) >= SWITCH_PERIOD_MS) {
+    else if (Runner::interval_check(SWITCH_PERIOD_MS)) {
         m_state = !m_state;
-        m_counter = -1;
     }
     digitalWrite(m_pin, m_state);
 }
