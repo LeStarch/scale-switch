@@ -7,6 +7,7 @@
  *      Author: lestarch
  */
 #include "serial.hpp"
+#include <string.h>
 /**
  * Construction done via references, to ensure saftey and memory.
  */
@@ -15,7 +16,9 @@ SerialPass::SerialPass(HardwareSerial& in, SoftwareSerial& out) :
     m_out(out),
     m_cmd_index(0),
     m_cmd_state(false)
-{}
+{
+    memcpy(m_matrix, MATRIX_TEMPLATE_STR, sizeof(m_matrix));
+}
 /**
  * Begin the serial device
  */
@@ -62,4 +65,14 @@ void SerialPass::run(uint32_t wait) {
             m_in.write(static_cast<uint8_t>(character));
         }
     }
+}
+/**
+ * Toggle the devices.
+ */
+void SerialPass :: toggle() {
+	//Singleton pointer to the active device
+	static char active = 0;
+	m_matrix[7] = active + '1';
+	m_out.write(m_matrix, sizeof(m_matrix));
+	active = (active + 1) % MAX_MATRIX;
 }

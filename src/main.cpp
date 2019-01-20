@@ -62,7 +62,7 @@ void podium_press(ButtonType button) {
     for (unsigned int i = 0; i < NUM_ARRAY_ELEMENTS(indicators); i++) {
         indicators[i]->button_pressed(button);
     }
-    REPORT_ERROR("Podium error");
+    pass.toggle();
 }
 /**
  * What to do when the display button is pressed.
@@ -72,7 +72,6 @@ void display_press(ButtonType button) {
     for (unsigned int i = 0; i < NUM_ARRAY_ELEMENTS(indicators); i++) {
         indicators[i]->button_pressed(button);
     }
-    REPORT_ERROR("ERROR");
 }
 /**
  * Define the error handling function, which passes the arguments
@@ -84,6 +83,7 @@ void error(const char* file, const int line, const char* message) {
     for (unsigned int i = 0; i < NUM_ARRAY_ELEMENTS(indicators); i++) {
         indicators[i]->error(file, line, message);
     }
+    REPORT_ERROR("Carlos!");
 }
 /**
  * Setup:

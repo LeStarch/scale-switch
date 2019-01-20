@@ -14,6 +14,11 @@
 #include "types.hpp"
 #define START_CMD '<'
 #define END_CMD '>'
+#define MAX_MATRIX 2
+#define MATRIX_TEMPLATE_SIZE 12
+//Template to fill with characters
+#define MATRIX_TEMPLATE_STR "MT00SW0x01NT"
+
 class SerialPass {
     public:
         /**
@@ -32,6 +37,10 @@ class SerialPass {
          * \param uint32_t wait: number of milliseconds to run for
          */
         void run(uint32_t wait);
+        /**
+         * Iterate through the available device.
+         */
+        void toggle();
     private:
         //!< Hardware serial input (from host)
         HardwareSerial& m_in;
@@ -43,5 +52,8 @@ class SerialPass {
         bool m_cmd_state;
         //!< Command data
         uint8_t m_cmd[MAX_STR_LEN];
+        //!< Non-constant storage
+        char m_matrix[MATRIX_TEMPLATE_SIZE];
+
 };
 #endif /* SRC_SERIAL_HPP_ */
