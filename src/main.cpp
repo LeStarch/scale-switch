@@ -62,7 +62,7 @@ void podium_press(ButtonType button) {
     for (unsigned int i = 0; i < NUM_ARRAY_ELEMENTS(indicators); i++) {
         indicators[i]->button_pressed(button);
     }
-    pass.toggle();
+    pass.manual();
 }
 /**
  * What to do when the display button is pressed.
