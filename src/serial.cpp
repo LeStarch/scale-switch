@@ -88,8 +88,8 @@ void SerialPass::run(uint32_t wait) {
                  static_cast<char>(character) == COMM_MAT) {
             m_mode = SerialPass::MODE_IDLE;
             m_index = 0;
-            //Update current from last message
-            m_current = m_buffer[MATRIX_TEMPLATE_FILL_INDEX];
+            //Update current from last message, shifting from ascii to 0 based integer index
+            m_current = m_buffer[MATRIX_TEMPLATE_FILL_INDEX] - '1';
         }
         //Steady-state command and pass through seeks through buffer
         else if (m_mode == SerialPass::MODE_COMMAND ||
@@ -116,6 +116,7 @@ void SerialPass::run(uint32_t wait) {
  */
 void SerialPass :: send_manual() {
     m_current = (m_current + 1) % MAX_MATRIX;
+    //Shifting from 0 based integer index to ascii
     m_matrix[MATRIX_TEMPLATE_FILL_INDEX] = m_current + '1';
     m_out.write(m_matrix, sizeof(m_matrix));
     m_switch = false;

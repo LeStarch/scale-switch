@@ -50,10 +50,11 @@ void Button::register_handler(ButtonHandle handler) {
  * callback function.
  */
 void Button::handle() {
-    unsigned int current = millis();
+    unsigned long current = millis();
     //Brake out early when debouncing
-    //Note: will fail safely on overflow (shorter debounce interval)
-    if ((current > m_last) && (current < (m_last + m_debounce))) {
+    //Note: will fail safely on overflow (longer debounce interval)
+    if (((current > m_last) && (current < (m_last + m_debounce))) ||
+        (m_last + m_debounce) < m_last) {
         return;
     }
     //Call registered callback

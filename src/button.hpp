@@ -61,7 +61,7 @@ class Button : public Runner
         //!< Debounce interval in milliseconds
         int m_debounce;
         //!< Last pressed time (fill will millis() call
-        unsigned int m_last;
+        unsigned long m_last;
         //!< Button press handler function
         ButtonHandle m_handler;
         //!< Button type of this button
