@@ -17,7 +17,7 @@
 #define MAX_MATRIX 2
 #define MATRIX_TEMPLATE_SIZE 12
 //Template to fill with characters
-#define MATRIX_TEMPLATE_STR "MT00SW0x01NT"
+#define MATRIX_TEMPLATE_STR "MT00SW0x02NT"
 
 class SerialPass {
     public:
