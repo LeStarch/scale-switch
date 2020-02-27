@@ -30,20 +30,13 @@ class OLED : public Indicator
          */
         OLED();
         /**
-         * Sets the IP address once it arrives
-         * \param const char* ip: ip address to set
-         */
-        void set_ip(const uint8_t* ip);
-
-        /**
-         * Sets the name of the device
-         * \param const char* name: name to set
-         */
-        void set_name(const char* name);
-        /**
          * Setup this OLED screen.
          */
         bool setup();
+        /**
+	 * A button has been pressed.  We only care about the front button.
+	 */
+        void button_pressed(ButtonType button);
         /**
          * Overrides run to provide OLED specific actions
          */
@@ -51,10 +44,10 @@ class OLED : public Indicator
     protected:
         //!< OLED screen to display to
         Adafruit_SSD1306 m_display;
-        //!< IP address string
-        uint8_t m_ip[IP_ADDRESS_LEN];
-        //!< Name string
-        char m_name[MAX_STR_LEN];
+        //!< Index of current display
+        uint8_t m_index;
+        //!< Current count 
+        uint8_t m_update_count;
         //!< Updated message
         bool m_updated;
         //!< First error

@@ -53,6 +53,14 @@ class Indicator : public Runner
         virtual void boot_update(BootStatus status);
 
         /**
+         * Statically handles messages. This will allow all indicators to
+         *  share the same message information.
+         * \param const char* key: key assoicated with message
+         * \param const char* msg: user provided message
+         */
+        static void message(const char* key, const char* msg);
+
+        /**
          * Indicates an error happened. Allows this indicator to display the
          * error and relevant information. Default: store the error contents
          * and set the m_error boolean to indicate an error state. It is not
@@ -84,5 +92,11 @@ class Indicator : public Runner
         static char s_error_file[MAX_STR_LEN];
         //!< Static, shared current error message
         static char s_error_message[MAX_STR_LEN];
+        //!< Static, shared message pointer
+        static unsigned int s_msg_pointer;
+        //!< Static, shared key storage
+        static char s_key_store[MAX_MSG_COUNT][MAX_KEY_LEN + 1];
+        //!< Static, shared message storage
+        static char s_msg_store[MAX_MSG_COUNT][MAX_STR_LEN + 1];
 };
 #endif /* SRC_INDICATOR_HPP_ */

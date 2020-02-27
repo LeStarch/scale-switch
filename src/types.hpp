@@ -12,15 +12,16 @@
 #ifndef SRC_TYPES_HPP_
 #define SRC_TYPES_HPP_
 #include <stdint.h>
-
+//!< Maximum key width
+#define MAX_KEY_LEN 4
 //!< Maximum length of string
 #define MAX_STR_LEN 20
 //!< Seconds per millisecond
 #define MS_PER_SECOND 1000
 //!< Maximum gpio pin count
 #define GPIO_PIN_COUNT 32
-//!< IP Address Length (in bytes)
-#define IP_ADDRESS_LEN 4
+//!< Maximum message count
+#define MAX_MSG_COUNT 4
 //!< Get array elements
 #define NUM_ARRAY_ELEMENTS(array) (sizeof(array)/sizeof(array[0]))
 //!< Runner count

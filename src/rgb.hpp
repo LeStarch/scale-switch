@@ -42,6 +42,8 @@ class RGB : public Indicator {
         static const unsigned int POINTS[];
         //!< Waypoints for error mode, will be subdivided into sets of 3
         static const unsigned int ERROR_POINTS[];
+        //!< Count for pressed
+        unsigned int m_countdown;
         //!< Pins to write to, in order to output color
         int m_pin[COLOR_COUNT];
         //!< Index of last waypoint reached

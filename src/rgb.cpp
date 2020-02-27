@@ -35,6 +35,7 @@ const unsigned int RGB::ERROR_POINTS[] PROGMEM = {
  * Attach to given pins, and set their types.
  */
 RGB::RGB(int rpin, int gpin, int bpin) :
+    m_countdown(0),
     m_index(0)
 {
     m_pin[RED] = rpin;
@@ -56,23 +57,39 @@ RGB::RGB(int rpin, int gpin, int bpin) :
  */
 void RGB::run() {
     //ASSERT(COLOR_COUNT == NUM_ARRAY_ELEMENTS(m_pin), "Color count failure");
-	unsigned int next_index = 0;
-	unsigned int current[COLOR_COUNT]; //Current waypoint
-	unsigned int next[COLOR_COUNT]; //Next waypoint
+    unsigned int next_index = 0;
+    unsigned int current[COLOR_COUNT]; //Current waypoint
+    unsigned int next[COLOR_COUNT]; //Next waypoint
     const unsigned int* waypoints;
-	//Assign the waypoint pointer, and next index based on the error state
-	if (s_error_state) {
+    // A podium button was pressed
+    if (m_pressed[BUTTON_PODIUM])
+    {
+        m_pressed[BUTTON_PODIUM] = false;
+	m_countdown = 30;
+        analogWrite(m_pin[BLUE], 0xFF);
+        analogWrite(m_pin[RED], 0);
+        analogWrite(m_pin[GREEN], 0);
+        return;
+    }
+    // Presse expiration interval
+    else if (m_countdown > 0) {
+        m_countdown--;
+        analogWrite(m_pin[BLUE], 0xFF - (m_countdown<<3));
+        return;
+    }
+    //Assign the waypoint pointer, and next index based on the error state
+    else if (s_error_state) {
         next_index = (m_index + COLOR_COUNT) % NUM_ARRAY_ELEMENTS(ERROR_POINTS);
         waypoints = ERROR_POINTS;
     } else {
         next_index = (m_index + COLOR_COUNT) % NUM_ARRAY_ELEMENTS(POINTS);
         waypoints = POINTS;
     }
-	//Assign current and next pointers
-	for (unsigned int i = 0; i < COLOR_COUNT; i++) {
-		current[i] = pgm_read_word_near(waypoints + m_index + i);
-		next[i] = pgm_read_word_near(waypoints + next_index + i);
-	}
+    //Assign current and next pointers
+    for (unsigned int i = 0; i < COLOR_COUNT; i++) {
+        current[i] = pgm_read_word_near(waypoints + m_index + i);
+        next[i] = pgm_read_word_near(waypoints + next_index + i);
+    }
     //Update each color by doing the following:
     // 1. Calculate the distance between this and next point as scalar
     // 2. Multiply by current step size

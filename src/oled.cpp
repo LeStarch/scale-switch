@@ -13,26 +13,11 @@
  */
 OLED::OLED() : Indicator(),
     m_display(SSD1306_LCDWIDTH, SSD1306_LCDHEIGHT),
+    m_index(0),
+    m_update_count(0),
     m_updated(true),
     m_first_error(true)
-{
-    memset(m_ip, 0, IP_ADDRESS_LEN);
-    strncpy(m_name, "<unknown name>", MAX_STR_LEN);
-}
-/**
- * Sets the IP address in the member variable for use later.
- */
-void OLED::set_ip(const uint8_t* ip) {
-    memcpy(m_ip, ip, IP_ADDRESS_LEN);
-    m_updated = true;
-}
-/**
- * Sets the name in the member variable for use later.
- */
-void OLED::set_name(const char* name) {
-    strncpy(m_name, name, MAX_STR_LEN);
-    m_updated = true;
-}
+{}
 /**
  * Sets up the OLED screen by calling being for the OLED driver.
  */
@@ -43,16 +28,27 @@ bool OLED::setup() {
         m_display.clearDisplay();
         m_display.display();
         //Global setups for later
-        m_display.setTextSize(1);
+        m_display.setTextSize(2);
         m_display.setTextColor(WHITE);
     }
     return true;
+}
+/**
+ * Respond to a button press
+ */
+void OLED::button_pressed(ButtonType button) {
+    if (button == BUTTON_DISPLAY) {
+        m_index = (m_index + 1) % MAX_MSG_COUNT;
+    }
+    m_updated = true;
 }
 /**
  * Implementation of the run function. Remember: all work must be done in
  * snapshots that occur 1/Nms. This means *no* long-running work.
  */
 void OLED::run() {
+    m_updated = m_updated || m_update_count == 0;
+    m_update_count = (m_update_count + 1) % 20;
     //No updates, don't waste time
     if (!m_updated && !(m_first_error && s_error_state)) {
         return;
@@ -69,20 +65,13 @@ void OLED::run() {
         m_display.print(":");
         m_display.print(s_error_line);
     }
-    //TODO: better than just IP and name
     else {
         m_updated = false;
-        for (int i = 0; i < IP_ADDRESS_LEN; i++) {
-            //Integer for ith octet
-            m_display.print(((int)m_ip[i]));
-            //Add a "." after first N-1 octets
-            if (i < (IP_ADDRESS_LEN -1)) {
-                m_display.print(".");
-            }
-        }
-        //Switch to another line
-        m_display.println();
-        m_display.println(m_name);
+        m_display.print(Indicator::s_key_store[m_index]);
+        m_display.println(":");
+        m_display.setTextSize(1);
+        m_display.println(Indicator::s_msg_store[m_index]);
+        m_display.setTextSize(2);
     }
     //Display the data in the display buffer
     m_display.display();

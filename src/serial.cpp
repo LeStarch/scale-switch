@@ -7,6 +7,7 @@
  *      Author: lestarch
  */
 #include "serial.hpp"
+#include "indicator.hpp"
 #include <string.h>
 /**
  * Construction done via references, to ensure saftey and memory.
@@ -51,7 +52,7 @@ void SerialPass::run(uint32_t wait) {
             //Termination of command mode, parse stored data
             if (static_cast<char>(character) == END_CMD) {
                 m_cmd_state = false;
-                //TODO: parse command here
+		Indicator::message(m_cmd, m_cmd + MAX_KEY_LEN);
             }
             //Store valid data
             else if (character != -1) {

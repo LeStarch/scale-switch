@@ -15,6 +15,11 @@ char Indicator::s_error_file[MAX_STR_LEN];
 char Indicator::s_error_message[MAX_STR_LEN];
 int Indicator::s_error_line = -1;
 bool Indicator::s_error_state = false;
+unsigned int Indicator::s_msg_pointer = 0;
+//!< Static, shared key storage
+char Indicator::s_key_store[MAX_MSG_COUNT][MAX_KEY_LEN + 1];
+//!< Static, shared message storage
+char Indicator::s_msg_store[MAX_MSG_COUNT][MAX_STR_LEN + 1];
 
 /**
  * Constuctor initializes the member variables of the class.
@@ -60,6 +65,18 @@ void Indicator::boot_update(BootStatus status) {
     //Bounds checking, or return
     ASSERT(status < MAX_BOOT, "Boot status out of range");
     m_writing[status] = true;
+}
+/**
+ * The default handler for incoming messages. This will store the last N
+ * messages received, and discard the rest.
+ */
+void Indicator::message(const char* key, const char* msg) {
+    strncpy(Indicator::s_key_store[Indicator::s_msg_pointer], key, MAX_KEY_LEN);
+    strncpy(Indicator::s_msg_store[Indicator::s_msg_pointer], msg, MAX_STR_LEN);
+    Indicator::s_key_store[Indicator::s_msg_pointer][MAX_KEY_LEN] = '\0';
+    Indicator::s_msg_store[Indicator::s_msg_pointer][MAX_STR_LEN] = '\0';
+
+    s_msg_pointer = (s_msg_pointer + 1) % MAX_MSG_COUNT;
 }
 /**
  * The default indicator action for errors is to set the error state and set
