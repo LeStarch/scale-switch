@@ -15,6 +15,7 @@
 #define START_CMD '<'
 #define END_CMD '>'
 #define MAX_MATRIX 2
+#define RESPONSE_SIZE 48
 #define MATRIX_TEMPLATE_SIZE 12
 //Template to fill with characters
 #define MATRIX_TEMPLATE_STR "MT00SW0x02NT"
@@ -23,7 +24,8 @@ enum SerialState {
     IDLE,    // Nothing going on
     COMMAND, // Processing a command
     MSG1,    // First part of message (before first T)
-    MSG2     // Second part of message (before closing T)
+    MSG2,    // Second part of message (before closing T)
+    RESP,    // Response
 };
 
 class SerialPass {
@@ -59,10 +61,12 @@ class SerialPass {
         SoftwareSerial& m_out;
         //!< Index into m_cmd
         unsigned int m_cmd_index;
+        //!< Index into response count
+        unsigned int m_response_count;
         //!< Serial state to process commands, or others
         SerialState m_state;
         //!< Command data
-        uint8_t m_cmd[MAX_STR_LEN];
+        uint8_t m_cmd[MAX_KEY_LEN + MAX_STR_LEN];
         //!< Non-constant storage
         char m_matrix[MATRIX_TEMPLATE_SIZE];
         //!< Interrupted

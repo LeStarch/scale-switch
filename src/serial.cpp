@@ -16,6 +16,7 @@ SerialPass::SerialPass(HardwareSerial& in, SoftwareSerial& out) :
     m_in(in),
     m_out(out),
     m_cmd_index(0),
+    m_response_count(0),
     m_state(IDLE),
     m_interrupt(false)
 {
@@ -42,11 +43,15 @@ void SerialPass::run(uint32_t wait) {
     //Loop for the time reading and writing
     while (millis() < ending) {
         // Handle podium presses before passthrough
-        if (m_interrupt || m_state == IDLE) {
+        if (m_interrupt && m_state == IDLE) {
             toggle();
             m_interrupt = false;
         }
-        int character = m_in.read();
+        //While waiting for a response, don't read character
+        int character = -1;
+        if (m_state != RESP) {
+            character = m_in.read();
+        }
         //Handle operations in normal mode (sending matrix data)
         if (m_state == IDLE) {
             //Read a start character, switch to command mode
@@ -54,20 +59,23 @@ void SerialPass::run(uint32_t wait) {
                 m_state = COMMAND;
                 m_cmd_index = 0;
             }
-	    //Handle 'M' characters the other possible token
-            else if (character == 'M') {
+            //Handle 'M' characters the other possible token
+            else if (static_cast<char>(character) == 'M') {
                 m_state = MSG1;
                 m_out.write(static_cast<uint8_t>(character));
             }
         }
         // Messaging states
-	else if (m_state == MSG1 || m_state == MSG2) {
-	    //Handle 'T' character states, second one is done
-            if (character == 'T' && m_state == MSG1) {
+        else if (m_state == MSG1 || m_state == MSG2) {
+            //Handle 'T' character states, second one is done
+            if (static_cast<char>(character) == 'T' && m_state == MSG1) {
                 m_state = MSG2;
-            } else if (character == 'T' && m_state == MSG2) {
-                m_state = IDLE;
-	    }
+            } else if (static_cast<char>(character) == 'R' && m_state == MSG2) {
+                //Expected a response if this is a read
+                m_response_count = RESPONSE_SIZE;
+            } else if (static_cast<char>(character) == 'T' && m_state == MSG2) {
+                m_state = RESP;
+            }
             m_out.write(static_cast<uint8_t>(character));             
         }
         //Command mode, read data and store for parsing
@@ -75,12 +83,18 @@ void SerialPass::run(uint32_t wait) {
             //Termination of command mode, parse stored data
             if (static_cast<char>(character) == END_CMD) {
                 m_state = IDLE;
-		Indicator::message(m_cmd, m_cmd + MAX_KEY_LEN);
+                Indicator::message(m_cmd, m_cmd + MAX_KEY_LEN);
             }
             //Store valid data
-            else if (character != -1) {
+            else if (character != -1 && m_cmd_index < (MAX_STR_LEN + MAX_KEY_LEN)) {
                 m_cmd[m_cmd_index] = static_cast<uint8_t>(character);
                 m_cmd_index++;
+            }
+        }
+        // Handle response counting back
+        else if (m_state == RESP) {
+            if (m_response_count == 0) {
+                m_state = IDLE;
             }
         }
         else {
@@ -90,6 +104,9 @@ void SerialPass::run(uint32_t wait) {
         character = m_out.read();
         if (character != -1) {
             m_in.write(static_cast<uint8_t>(character));
+            if (m_response_count > 0) {
+                m_response_count = m_response_count - 1;
+            }
         }
     }
 }
@@ -97,9 +114,9 @@ void SerialPass::run(uint32_t wait) {
  * Toggle the devices.
  */
 void SerialPass :: toggle() {
-	//Singleton pointer to the active device
-	static char active = 0;
-	m_matrix[7] = active + '1';
-	m_out.write(m_matrix, sizeof(m_matrix));
-	active = (active + 1) % MAX_MATRIX;
+        //Singleton pointer to the active device
+        static char active = 0;
+        m_matrix[7] = active + '1';
+        m_out.write(m_matrix, sizeof(m_matrix));
+        active = (active + 1) % MAX_MATRIX;
 }
