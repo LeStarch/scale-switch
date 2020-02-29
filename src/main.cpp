@@ -58,11 +58,11 @@ Button* buttons[] = {&b_podium, &b_display};
  * What to do when the podium button is pressed.
  */
 void podium_press(ButtonType button) {
+    pass.interrupt();
     //Error all the indicators
     for (unsigned int i = 0; i < NUM_ARRAY_ELEMENTS(indicators); i++) {
         indicators[i]->button_pressed(button);
     }
-    pass.toggle();
 }
 /**
  * What to do when the display button is pressed.

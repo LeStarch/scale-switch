@@ -19,6 +19,13 @@
 //Template to fill with characters
 #define MATRIX_TEMPLATE_STR "MT00SW0x02NT"
 
+enum SerialState {
+    IDLE,    // Nothing going on
+    COMMAND, // Processing a command
+    MSG1,    // First part of message (before first T)
+    MSG2     // Second part of message (before closing T)
+};
+
 class SerialPass {
     public:
         /**
@@ -37,6 +44,10 @@ class SerialPass {
          * \param uint32_t wait: number of milliseconds to run for
          */
         void run(uint32_t wait);
+        /** 
+	 * Interrupt line
+	 */
+	void interrupt();
         /**
          * Iterate through the available device.
          */
@@ -48,12 +59,13 @@ class SerialPass {
         SoftwareSerial& m_out;
         //!< Index into m_cmd
         unsigned int m_cmd_index;
-        //!< Command state
-        bool m_cmd_state;
+        //!< Serial state to process commands, or others
+        SerialState m_state;
         //!< Command data
         uint8_t m_cmd[MAX_STR_LEN];
         //!< Non-constant storage
         char m_matrix[MATRIX_TEMPLATE_SIZE];
-
+        //!< Interrupted
+        bool m_interrupt;
 };
 #endif /* SRC_SERIAL_HPP_ */

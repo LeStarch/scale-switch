@@ -16,7 +16,8 @@ SerialPass::SerialPass(HardwareSerial& in, SoftwareSerial& out) :
     m_in(in),
     m_out(out),
     m_cmd_index(0),
-    m_cmd_state(false)
+    m_state(IDLE),
+    m_interrupt(false)
 {
     memcpy(m_matrix, MATRIX_TEMPLATE_STR, sizeof(m_matrix));
 }
@@ -28,30 +29,52 @@ void SerialPass::begin(int baud) {
     m_out.begin(baud);
 }
 /**
+ * Interrupted, toggle
+ */
+void SerialPass::interrupt() {
+    m_interrupt = true;
+}
+/**
  * Run the serial pass-through and deframer
  */
 void SerialPass::run(uint32_t wait) {
     uint32_t ending = wait + millis();
     //Loop for the time reading and writing
     while (millis() < ending) {
+        // Handle podium presses before passthrough
+        if (m_interrupt || m_state == IDLE) {
+            toggle();
+            m_interrupt = false;
+        }
         int character = m_in.read();
         //Handle operations in normal mode (sending matrix data)
-        if (!m_cmd_state) {
+        if (m_state == IDLE) {
             //Read a start character, switch to command mode
             if (static_cast<char>(character) == START_CMD) {
-                m_cmd_state = true;
+                m_state = COMMAND;
                 m_cmd_index = 0;
             }
-            //Otherwise pass the data through
-            else if (character != -1) {
+	    //Handle 'M' characters the other possible token
+            else if (character == 'M') {
+                m_state = MSG1;
                 m_out.write(static_cast<uint8_t>(character));
             }
         }
+        // Messaging states
+	else if (m_state == MSG1 || m_state == MSG2) {
+	    //Handle 'T' character states, second one is done
+            if (character == 'T' && m_state == MSG1) {
+                m_state = MSG2;
+            } else if (character == 'T' && m_state == MSG2) {
+                m_state = IDLE;
+	    }
+            m_out.write(static_cast<uint8_t>(character));             
+        }
         //Command mode, read data and store for parsing
-        else {
+        else if (m_state == COMMAND) {
             //Termination of command mode, parse stored data
             if (static_cast<char>(character) == END_CMD) {
-                m_cmd_state = false;
+                m_state = IDLE;
 		Indicator::message(m_cmd, m_cmd + MAX_KEY_LEN);
             }
             //Store valid data
@@ -59,6 +82,9 @@ void SerialPass::run(uint32_t wait) {
                 m_cmd[m_cmd_index] = static_cast<uint8_t>(character);
                 m_cmd_index++;
             }
+        }
+        else {
+            ASSERT(false, "Invalid serial state");
         }
         //Pass-through the returned UART message
         character = m_out.read();
