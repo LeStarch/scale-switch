@@ -21,7 +21,7 @@
 //!< Maximum gpio pin count
 #define GPIO_PIN_COUNT 32
 //!< Maximum message count
-#define MAX_MSG_COUNT 4
+#define MAX_MSG_COUNT 5
 //!< Get array elements
 #define NUM_ARRAY_ELEMENTS(array) (sizeof(array)/sizeof(array[0]))
 //!< Runner count

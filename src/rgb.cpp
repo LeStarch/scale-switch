@@ -36,7 +36,8 @@ const unsigned int RGB::ERROR_POINTS[] PROGMEM = {
  */
 RGB::RGB(int rpin, int gpin, int bpin) :
     m_countdown(0),
-    m_index(0)
+    m_index(0),
+    m_started(false)
 {
     m_pin[RED] = rpin;
     m_pin[GREEN] = gpin;
@@ -50,7 +51,9 @@ RGB::RGB(int rpin, int gpin, int bpin) :
     m_color[1] = pgm_read_word_near(POINTS + 1);
     m_color[2] = pgm_read_word_near(POINTS + 2);
 }
-
+void RGB::message(const char* key, const char* msg) {
+     m_started = true;
+}
 /**
  * Run function slowly walks through way-points. Each waypoint represents an equi-
  * distant point to walk through.
@@ -60,27 +63,28 @@ void RGB::run() {
     unsigned int next_index = 0;
     unsigned int current[COLOR_COUNT]; //Current waypoint
     unsigned int next[COLOR_COUNT]; //Next waypoint
-    const unsigned int* waypoints;
+    const unsigned int *waypoints;
     // A podium button was pressed
-    if (m_pressed[BUTTON_PODIUM])
-    {
+    if (m_pressed[BUTTON_PODIUM]) {
         m_pressed[BUTTON_PODIUM] = false;
-	m_countdown = 30;
+        m_countdown = 30;
         analogWrite(m_pin[BLUE], 0xFF);
         analogWrite(m_pin[RED], 0);
         analogWrite(m_pin[GREEN], 0);
         return;
     }
-    // Presse expiration interval
+        // Presse expiration interval
     else if (m_countdown > 0) {
         m_countdown--;
-        analogWrite(m_pin[BLUE], 0xFF - (m_countdown<<3));
+        analogWrite(m_pin[BLUE], 0xFF - (m_countdown << 3));
         return;
     }
-    //Assign the waypoint pointer, and next index based on the error state
+        //Assign the waypoint pointer, and next index based on the error state
     else if (s_error_state) {
         next_index = (m_index + COLOR_COUNT) % NUM_ARRAY_ELEMENTS(ERROR_POINTS);
         waypoints = ERROR_POINTS;
+    } else if (!m_started) {
+        return;
     } else {
         next_index = (m_index + COLOR_COUNT) % NUM_ARRAY_ELEMENTS(POINTS);
         waypoints = POINTS;

@@ -32,6 +32,13 @@ class RGB : public Indicator {
          * Constructor to set the pins for the RGB leds.
          */
         RGB(int rpin, int gpin, int bpin);
+
+        /**
+         * Override the message handle, so that it can no turn on the LED until the first message is received
+         * @param key: message key
+         * @param msg: message
+         */
+        void message(const char* key, const char* msg);
         /**
          * Run every 1/N ms. Should display RED on error, or make one
          * step to change color between this and the next step.
@@ -50,5 +57,7 @@ class RGB : public Indicator {
         unsigned int m_index;
         //!< Current R,G,B colors of the LED
         unsigned int m_color[COLOR_COUNT];
+
+        bool m_started;
 };
 #endif /* SRC_RGB_HPP_ */

@@ -17,9 +17,9 @@ int Indicator::s_error_line = -1;
 bool Indicator::s_error_state = false;
 unsigned int Indicator::s_msg_pointer = 0;
 //!< Static, shared key storage
-char Indicator::s_key_store[MAX_MSG_COUNT][MAX_KEY_LEN + 1];
+char Indicator::s_key_store[MAX_MSG_COUNT][MAX_KEY_LEN + 1] = {"", "", "", "", "Firm"};
 //!< Static, shared message storage
-char Indicator::s_msg_store[MAX_MSG_COUNT][MAX_STR_LEN + 1];
+char Indicator::s_msg_store[MAX_MSG_COUNT][MAX_STR_LEN + 1] = {"", "", "", "", "STARCH-1"};
 
 /**
  * Constuctor initializes the member variables of the class.
@@ -76,7 +76,7 @@ void Indicator::message(const char* key, const char* msg) {
     Indicator::s_key_store[Indicator::s_msg_pointer][MAX_KEY_LEN] = '\0';
     Indicator::s_msg_store[Indicator::s_msg_pointer][MAX_STR_LEN] = '\0';
 
-    s_msg_pointer = (s_msg_pointer + 1) % MAX_MSG_COUNT;
+    s_msg_pointer = (s_msg_pointer + 1) % (MAX_MSG_COUNT - 1); // Last slot is for firmware id
 }
 /**
  * The default indicator action for errors is to set the error state and set
