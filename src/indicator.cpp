@@ -18,9 +18,9 @@ int Indicator::s_error_line = -1;
 bool Indicator::s_error_state = false;
 unsigned int Indicator::s_msg_pointer = 0;
 //!< Static, shared key storage
-char Indicator::s_key_store[MAX_MSG_COUNT][MAX_KEY_LEN + 1] = {"", "", "", "", "Firm"};
+char Indicator::s_key_store[MAX_MSG_COUNT][MAX_KEY_LEN + 1];
 //!< Static, shared message storage
-char Indicator::s_msg_store[MAX_MSG_COUNT][MAX_STR_LEN + 1] = {"", "", "", "", VERSION};
+char Indicator::s_msg_store[MAX_MSG_COUNT][MAX_STR_LEN + 1];
 
 /**
  * Constuctor initializes the member variables of the class.
@@ -36,6 +36,10 @@ Indicator::Indicator() : Runner()
     }
     memset(s_error_file, 0, MAX_STR_LEN);
     memset(s_error_message, 0, MAX_STR_LEN);
+    memset(Indicator::s_key_store, 0, sizeof(Indicator::s_key_store));
+    memset(Indicator::s_msg_store, 0, sizeof(Indicator::s_msg_store));
+    strncpy(Indicator::s_key_store[MAX_MSG_COUNT - 1], "FIRM", MAX_KEY_LEN);
+    strncpy(Indicator::s_msg_store[MAX_MSG_COUNT - 1],  VERSION, MAX_STR_LEN);
 }
 
 /**

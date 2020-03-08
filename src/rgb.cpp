@@ -80,7 +80,7 @@ void RGB::run() {
         next_index = (m_index + COLOR_COUNT) % NUM_ARRAY_ELEMENTS(ERROR_POINTS);
         waypoints = ERROR_POINTS;
     }
-    else if (Indicator::s_key_store[0] != "") {
+    else if (Indicator::s_key_store[0][0] == '\0') {
         analogWrite(m_pin[RED], 0);
         analogWrite(m_pin[GREEN], 0);
         analogWrite(m_pin[BLUE], 0);
