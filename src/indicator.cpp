@@ -9,6 +9,7 @@
 #include <string.h>
 #include <Arduino.h>
 #include "indicator.hpp"
+#include "version.hpp"
 
 //Concrete definitions for shared static members
 char Indicator::s_error_file[MAX_STR_LEN];
@@ -19,7 +20,7 @@ unsigned int Indicator::s_msg_pointer = 0;
 //!< Static, shared key storage
 char Indicator::s_key_store[MAX_MSG_COUNT][MAX_KEY_LEN + 1] = {"", "", "", "", "Firm"};
 //!< Static, shared message storage
-char Indicator::s_msg_store[MAX_MSG_COUNT][MAX_STR_LEN + 1] = {"", "", "", "", "STARCH-1"};
+char Indicator::s_msg_store[MAX_MSG_COUNT][MAX_STR_LEN + 1] = {"", "", "", "", VERSION};
 
 /**
  * Constuctor initializes the member variables of the class.

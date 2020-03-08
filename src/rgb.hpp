@@ -34,12 +34,6 @@ class RGB : public Indicator {
         RGB(int rpin, int gpin, int bpin);
 
         /**
-         * Override the message handle, so that it can no turn on the LED until the first message is received
-         * @param key: message key
-         * @param msg: message
-         */
-        void message(const char* key, const char* msg);
-        /**
          * Run every 1/N ms. Should display RED on error, or make one
          * step to change color between this and the next step.
          */
@@ -51,8 +45,6 @@ class RGB : public Indicator {
         static const unsigned int ERROR_POINTS[];
         //!< Count for pressed
         unsigned int m_countdown;
-        //!< Count for pressed
-        unsigned int m_message_countdown;
 
         //!< Pins to write to, in order to output color
         int m_pin[COLOR_COUNT];
