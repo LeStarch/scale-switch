@@ -51,13 +51,14 @@ class RGB : public Indicator {
         static const unsigned int ERROR_POINTS[];
         //!< Count for pressed
         unsigned int m_countdown;
+        //!< Count for pressed
+        unsigned int m_message_countdown;
+
         //!< Pins to write to, in order to output color
         int m_pin[COLOR_COUNT];
         //!< Index of last waypoint reached
         unsigned int m_index;
         //!< Current R,G,B colors of the LED
         unsigned int m_color[COLOR_COUNT];
-
-        bool m_started;
 };
 #endif /* SRC_RGB_HPP_ */

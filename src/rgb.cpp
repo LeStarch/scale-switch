@@ -36,8 +36,8 @@ const unsigned int RGB::ERROR_POINTS[] PROGMEM = {
  */
 RGB::RGB(int rpin, int gpin, int bpin) :
     m_countdown(0),
-    m_index(0),
-    m_started(false)
+    m_message_countdown(0),
+    m_index(0)
 {
     m_pin[RED] = rpin;
     m_pin[GREEN] = gpin;
@@ -52,7 +52,7 @@ RGB::RGB(int rpin, int gpin, int bpin) :
     m_color[2] = pgm_read_word_near(POINTS + 2);
 }
 void RGB::message(const char* key, const char* msg) {
-     m_started = true;
+    m_message_countdown = 10;
 }
 /**
  * Run function slowly walks through way-points. Each waypoint represents an equi-
@@ -73,7 +73,7 @@ void RGB::run() {
         analogWrite(m_pin[GREEN], 0);
         return;
     }
-        // Presse expiration interval
+    // Presse expiration interval
     else if (m_countdown > 0) {
         m_countdown--;
         analogWrite(m_pin[BLUE], 0xFF - (m_countdown << 3));
@@ -83,9 +83,13 @@ void RGB::run() {
     else if (s_error_state) {
         next_index = (m_index + COLOR_COUNT) % NUM_ARRAY_ELEMENTS(ERROR_POINTS);
         waypoints = ERROR_POINTS;
-    } else if (!m_started) {
+    } else if (m_message_countdown == 0) {
+        analogWrite(m_pin[RED], 0);
+        analogWrite(m_pin[GREEN], 0);
+        analogWrite(m_pin[BLUE], 0);
         return;
     } else {
+        m_message_countdown = (m_message_countdown > 0) ? m_message_countdown - 1 : 0;
         next_index = (m_index + COLOR_COUNT) % NUM_ARRAY_ELEMENTS(POINTS);
         waypoints = POINTS;
     }
